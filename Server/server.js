@@ -5,6 +5,8 @@ import cors from "cors";
 import colors from "colors";
 import morgan from "morgan";
 import express from "express";
+import cloudinary from "./config/cloudinary.js";
+
 import { registerUser, loginUser, getUser } from "./config/firebase.js";
 import jwt from "jsonwebtoken";
 
@@ -60,6 +62,24 @@ app.get("/getUserInformation", async (req, res) => {
     console.error(error);
     res.status(500).json({ error: "Failed to fetch user" });
   }
+});
+
+// CLOUDINARY IMAGE UPLOAD
+
+app.post("/uploadImageToCloudinary", (req, res) => {
+  const { image } = req.body;
+
+  console.log("image backend receiverd : ", image);
+
+  cloudinary.uploader.upload(image, (error, result) => {
+    if (error) {
+      console.error("Cloudinary Error:", error);
+      return res.status(500).json({ error: "Upload failed" });
+    }
+
+    console.log("Uploaded to Cloudinary:", result);
+    res.status(200).json({ secure_url: result.secure_url });
+  });
 });
 
 // PORT

@@ -72,7 +72,7 @@ export const loginUser = async ({ email, password }) => {
 
   const token = jwt.sign({ email: userData.email, id: userDoc.id }, secret, {});
 
-  return { token, message: "Login successful" };
+  return { token, role: userData.role, message: "Login successful" };
 };
 
 export const getUser = async (email) => {

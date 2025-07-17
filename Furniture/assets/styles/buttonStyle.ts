@@ -18,11 +18,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
       },
 
-      test:{
-        fontSize:24,
-      }
      
-
 });
 
 export default styles;

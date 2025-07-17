@@ -42,8 +42,12 @@ export default function LogIn() {
 
             const response = await axios.post('http://192.168.0.102:8080/login', payload);
             if (response.status === 200) {
+
+                console.log("Full response data : " ,response.data);
                 const token = response.data.token; 
                 const role = response.data.role;
+                console.log("Rolul este : " , role);
+                console.log("Tokenul este : " , token);
 
 
                 if (token) {
