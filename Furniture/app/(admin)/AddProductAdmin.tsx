@@ -4,7 +4,9 @@ import React from 'react'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { StyleSheet, Text, TouchableOpacity, View , Image , ScrollView , TextInput} from 'react-native'
 
-import { useState  } from 'react'
+import { useState , useEffect  } from 'react'
+
+import axios from 'axios';
 
 import * as ImagePicker from 'expo-image-picker';
 
@@ -17,6 +19,12 @@ export default function AddProductAdmin() {
     const [price, setPrice] = useState('');
     const [quantity, setQuantity] = useState('');
     const [imageUri, setImageUri] =  useState<string | null>(null);
+    const [imageBase64, setImageBase64] = useState<string | null>(null);
+
+
+    useEffect(() => {
+      console.log('Updated Image Base64:', imageBase64);
+    }, [imageBase64]);
 
 
     const pickImage = async () => {
@@ -29,18 +37,47 @@ export default function AddProductAdmin() {
     
         // Open image picker
         let pickerResult = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          mediaTypes: 'images',
           allowsEditing: true,
           aspect: [4, 3],
           quality: 1,
+          base64: true, 
         });
     
         if (!pickerResult.canceled) {
           setImageUri(pickerResult.assets[0].uri);
+          setImageBase64(pickerResult.assets[0].base64 ?? null);
+
+          console.log("Image Base64 set : " , imageBase64)
           
         }
       };
 
+
+      const UploadImageToCloudinary = async () => {
+
+        console.log("Image Base64 in Upload Cloud : " , imageBase64)
+
+        if (!imageBase64) {
+          alert('No image selected!');
+          return;
+        }
+      
+        const base64Img = `data:image/jpg;base64,${imageBase64}`;
+
+        console.log("Base 64 image : " , base64Img);
+      
+        try {
+          const response = await axios.post('http://192.168.0.102:8080/uploadImageToCloudinary', {
+            image: base64Img,
+          });
+      
+          console.log('Uploaded Image URL:', response.data.secure_url);
+        } catch (err) {
+          console.error('Upload failed:', err);
+          alert('Upload failed');
+        }
+      };
 
      
 
@@ -107,7 +144,7 @@ export default function AddProductAdmin() {
             )}
 
 
-            <TouchableOpacity style={styles.ActionAddProdcut}>
+            <TouchableOpacity style={styles.ActionAddProdcut} onPress={() => UploadImageToCloudinary()}>
                 <Text style={styles.actionTextdA}> ADD </Text>
             </TouchableOpacity>
 

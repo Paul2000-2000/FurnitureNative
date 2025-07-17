@@ -52,7 +52,8 @@ export default function Profile() {
 
 
     const navigateLogin = () =>{
-        router.push('/(auth)/LogIn')
+        router.push('/(auth)/LogIn');
+        AsyncStorage.removeItem('token');
     }
 
     const navigateOrders = () =>{
