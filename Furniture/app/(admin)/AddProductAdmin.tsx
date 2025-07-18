@@ -6,9 +6,12 @@ import { StyleSheet, Text, TouchableOpacity, View , Image , ScrollView , TextInp
 
 import { useState , useEffect  } from 'react'
 
+import { router } from 'expo-router';
+
 import axios from 'axios';
 
 import * as ImagePicker from 'expo-image-picker';
+import RNPickerSelect from 'react-native-picker-select';
 
 import styleGlobal from '../../assets/styles/pageStyle'
 
@@ -17,9 +20,12 @@ export default function AddProductAdmin() {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [price, setPrice] = useState('');
+    const [category, setCategory] = useState('');
     const [quantity, setQuantity] = useState('');
     const [imageUri, setImageUri] =  useState<string | null>(null);
     const [imageBase64, setImageBase64] = useState<string | null>(null);
+
+    const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
 
     useEffect(() => {
@@ -71,13 +77,73 @@ export default function AddProductAdmin() {
           const response = await axios.post('http://192.168.0.102:8080/uploadImageToCloudinary', {
             image: base64Img,
           });
-      
+
+          
           console.log('Uploaded Image URL:', response.data.secure_url);
+
+          if (response.status === 200)
+            {
+            const imageUrl = response.data.secure_url;
+            return imageUrl;
+            }
+
+
         } catch (err) {
           console.error('Upload failed:', err);
           alert('Upload failed');
         }
       };
+
+      const handleAddProduct = async () =>{
+
+        const imageProduct = await UploadImageToCloudinary();
+
+        console.log('Se vrea adaugare de produs');
+        
+        const newErrors = {} as { [key: string]: string };
+
+        if (!name.trim()) newErrors.name = "Name is required";
+        if (!description.trim()) newErrors.description = "Description is required";
+        if (!category.trim()) newErrors.category = "Category is required";
+        if (!price.trim()) newErrors.price = "Price is required";
+        if (!quantity.trim()) newErrors.quantity = "Quantity is required";
+        if (!imageProduct) newErrors.imageProduct = "Image is required";
+        
+
+        setErrors(newErrors);
+
+        if (Object.keys(newErrors).length > 0) {
+            return; 
+        }
+
+        const payload ={
+          name,
+          description,
+          category,
+          price,
+          quantity,
+          imageProduct
+      }
+
+      console.log(payload);
+
+      try{
+
+        const response = await axios.post('http://192.168.0.102:8080/add-product', payload);
+        if (response.status === 200)
+            {
+                console.log('product added')
+                alert('Product registered successfully');
+                router.push('/(admin)/HomeAdmin');
+            }
+
+        } catch (error) {
+            alert('Something went wrong');
+            console.log('Request failed:', error); 
+        }
+
+
+      }
 
      
 
@@ -100,6 +166,7 @@ export default function AddProductAdmin() {
             onChangeText={(text) => setName(text)}
         
             />
+             {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
 
             <Text style={styles.inputHeader}>Product Description</Text>
             <TextInput placeholder='Enter product description'
@@ -110,7 +177,20 @@ export default function AddProductAdmin() {
             value={description}
             onChangeText={(text) => setDescription(text)}
             />
+            {errors.description && <Text style={styles.errorText}>{errors.description}</Text>}
 
+            <Text style={styles.inputHeader}>Product Category</Text>
+            <RNPickerSelect
+              onValueChange={(value) => setCategory(value)}
+             items={[
+                { label: 'Bed', value: 'bed' },
+                { label: 'Chair', value: 'chair' },
+                { label: 'Lamp', value: 'lamp' },
+                { label: 'Table', value: 'table' },
+
+                    ]}
+                />
+            {errors.category && <Text style={styles.errorText}>{errors.category}</Text>}
 
             <Text style={styles.inputHeader}>Product Price</Text>
             <TextInput placeholder='Enter product price'
@@ -122,6 +202,7 @@ export default function AddProductAdmin() {
             onChangeText={(text) => setPrice(text)}
             keyboardType="numeric"
             />
+            {errors.price && <Text style={styles.errorText}>{errors.price}</Text>}
 
 
             <Text style={styles.inputHeader}>Product Quantity</Text>
@@ -134,17 +215,20 @@ export default function AddProductAdmin() {
             onChangeText={(text) => setQuantity(text)}
             keyboardType="numeric"
             />
+            {errors.quantity && <Text style={styles.errorText}>{errors.quantity}</Text>}
 
             <TouchableOpacity  onPress={pickImage} style={styles.action}>
                 <Text style={styles.actionText}> Pick an image!</Text>
             </TouchableOpacity>
+
+            {errors.imageProduct && <Text style={styles.errorText}>{errors.imageProduct}</Text>}
 
             {imageUri && (
                 <Image source={{ uri: imageUri }} style={styles.image} />
             )}
 
 
-            <TouchableOpacity style={styles.ActionAddProdcut} onPress={() => UploadImageToCloudinary()}>
+            <TouchableOpacity style={styles.ActionAddProdcut} onPress={() => handleAddProduct()}>
                 <Text style={styles.actionTextdA}> ADD </Text>
             </TouchableOpacity>
 
@@ -213,5 +297,11 @@ const styles = StyleSheet.create({
       actionTextdA:{
         fontSize:25,
         color:'white'
-      }
+      },
+
+      errorText: {
+        color: 'red',
+        fontSize: 14,
+        marginLeft: 10,
+      },
 })

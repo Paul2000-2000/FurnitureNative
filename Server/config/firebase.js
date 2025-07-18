@@ -27,6 +27,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const firestoreDb = getFirestore(app);
 
+// USER DATABASE
+
 export const registerUser = async (req) => {
   const datoToUpload = {
     name: req.name,
@@ -88,6 +90,40 @@ export const getUser = async (email) => {
 
   const doc = querySnapshot.docs[0];
   return { id: doc.id, ...doc.data() };
+};
+
+// PRODUCT DATABASE
+
+export const addProduct = async (req) => {
+  const datoToUpload = {
+    name: req.name,
+    description: req.description,
+    category: req.category,
+    price: req.price,
+    quantity: req.quantity,
+    imageProduct: req.imageProduct,
+  };
+
+  try {
+    const productCollection = collection(firestoreDb, "products");
+    console.log("Dato to upload", datoToUpload);
+    console.log("Users collection", productCollection);
+
+    const q = query(productCollection, where("name", "==", datoToUpload.name));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+      console.log("Product exists!");
+      return true;
+    }
+
+    const docRef = await addDoc(productCollection, datoToUpload);
+
+    console.log("Document written with ID: ", docRef.id);
+  } catch (error) {
+    console.error("Error adding document: ", error);
+    throw error;
+  }
 };
 
 export default { app, firestoreDb };
