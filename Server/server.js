@@ -2,12 +2,16 @@ import dotenv from "dotenv";
 dotenv.config();
 const secret = process.env.JWT_SECRET;
 import cors from "cors";
-import colors from "colors";
 import morgan from "morgan";
 import express from "express";
 import cloudinary from "./config/cloudinary.js";
 
-import { registerUser, loginUser, getUser } from "./config/firebase.js";
+import {
+  registerUser,
+  loginUser,
+  getUser,
+  addProduct,
+} from "./config/firebase.js";
 import jwt from "jsonwebtoken";
 
 // DOTENV
@@ -17,7 +21,8 @@ const app = express();
 
 // MIDDLEWARES
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "20mb" }));
+app.use(express.urlencoded({ limit: "20mb", extended: true }));
 app.use(morgan("dev"));
 
 // ROUTES
@@ -80,6 +85,18 @@ app.post("/uploadImageToCloudinary", (req, res) => {
     console.log("Uploaded to Cloudinary:", result);
     res.status(200).json({ secure_url: result.secure_url });
   });
+});
+
+// ADMIN FUNCTIONS
+
+app.post("/add-product", async (req, res) => {
+  try {
+    console.log(req.body);
+    await addProduct(req.body);
+    res.status(200).json({ message: "Product added to Firestore" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to add product" });
+  }
 });
 
 // PORT
